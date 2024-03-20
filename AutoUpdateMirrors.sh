@@ -33,7 +33,7 @@ function StartTitle() {
     echo -e " | \033[0;1;35;95m⡇\033[0m  \033[0;1;33;93m⠄\033[0m \033[0;1;32;92m⣀⡀\033[0m \033[0;1;36;96m⡀\033[0;1;34;94m⢀\033[0m \033[0;1;35;95m⡀⢀\033[0m \033[0;1;31;91m⡷\033[0;1;33;93m⢾\033[0m \033[0;1;32;92m⠄\033[0m \033[0;1;36;96m⡀⣀\033[0m \033[0;1;34;94m⡀\033[0;1;35;95m⣀\033[0m \033[0;1;31;91m⢀⡀\033[0m \033[0;1;33;93m⡀\033[0;1;32;92m⣀\033[0m \033[0;1;36;96m⢀⣀\033[0m |"
     echo -e " | \033[0;1;31;91m⠧\033[0;1;33;93m⠤\033[0m \033[0;1;32;92m⠇\033[0m \033[0;1;36;96m⠇⠸\033[0m \033[0;1;34;94m⠣\033[0;1;35;95m⠼\033[0m \033[0;1;31;91m⠜⠣\033[0m \033[0;1;33;93m⠇\033[0;1;32;92m⠸\033[0m \033[0;1;36;96m⠇\033[0m \033[0;1;34;94m⠏\033[0m  \033[0;1;35;95m⠏\033[0m  \033[0;1;33;93m⠣⠜\033[0m \033[0;1;32;92m⠏\033[0m  \033[0;1;34;94m⠭⠕\033[0m |"
     echo -e ' +-----------------------------------+'
-    logger info ' 欢迎使用 GNU/Linux 更换系统软件源脚本'
+    logger info ' Welcom to GNU/Linux AutoupdateMirrors'
 }
 
 mirror_list_cn=(
@@ -106,14 +106,16 @@ function CheckOsType(){
     if [[ -z $OS ]] || [[ -z $OS_Version ]]; then
             logger error  "This OS seems to be  an unsupported distribution.Supported distros are Ubuntu, Debian, AlmaLinux, Rocky Linux, CentOS and Fedora."
     fi
+    command curl -V > /dev/null 2>&1 || { apt install curl -y > /dev/null 2>&1 || yum install curl -y > /dev/null 2>&1 || dnf install curl -y > /dev/null 2>&1; }
+    [ $? -ne 0 ] && logger error "Install curl failure..."
     case "$OS" in
         Debian)
-            if [[ "${OS_Version:0:1}" != [8-9] && "${OS_Version:0:2}" != 1[0-3] ]]; then
+            if [[ "${OS_Version:0:1}" != 9 && "${OS_Version:0:2}" != 1[0-3] ]]; then
                 logger error "The system version is not supported"
             fi
         ;;
         Ubuntu)
-            if [[ "${OS_Version:0:2}" != 1[4-9] && "${OS_Version:0:2}" != 2[0-4] ]]; then
+            if [[ "${OS_Version:0:2}" != 1[8-9] && "${OS_Version:0:2}" != 2[0-4] ]]; then
                 logger error "The system version is not supported"
             fi
         ;;
@@ -268,8 +270,8 @@ function ChooseMirrors() {
         time_zone="$(timedatectl status 2>/dev/null | grep "Time zone" | awk -F ':' '{print$2}' | awk -F ' ' '{print$1}')"
 
         logger info ''
-        logger info " 运行环境 ${system_name} ${arch}"
-        logger info " 系统时间 ${date_time} ${time_zone}"
+        logger info " Running Env ${system_name} ${arch}"
+        logger info " System Time ${date_time} ${time_zone}"
     }
     Title
     local Mirrors
@@ -307,7 +309,7 @@ function ChangeDebianMirror(){
     fi
     cp /etc/apt/sources.list /etc/apt/sources.list.$(date "+%Y%m%d$s%H%M%S").bak 
     case "$OS_Version" in
-        8 | 9 | 10 | 11)
+        9 | 10 | 11)
             source_suffix="main contrib non-free"
         ;;
         *)
@@ -322,7 +324,7 @@ deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-updates ${source_
 deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-backports ${source_suffix} 
 # deb-src ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-backports ${source_suffix} 
 deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-security ${source_suffix}" >/etc/apt/sources.list
-    apt-get update -y
+    apt-get update -y > /dev/null 2>&1
 }
 function ChangeUbuntuMirror(){
     mirror=$(cat /etc/apt/sources.list |grep -E '^deb http' |awk -F'/' '{print $3}'|head -1)
@@ -340,7 +342,7 @@ deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-updates ${source_
 deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-backports ${source_suffix} 
 # deb-src ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-backports ${source_suffix} 
 deb ${WebProtocol}${fast_mirror}/${Source_Branch}/ ${CodeName}-security ${source_suffix}" >/etc/apt/sources.list
-    apt-get update -y
+    apt-get update -y > /dev/null 2>&1
 }
 function ChangeRedMirror(){
     case "${OS}" in
@@ -363,7 +365,7 @@ function ChangeRedMirror(){
 /etc/yum.repos.d/rocky.repo
                ;;
             esac
-            dnf makecache
+            dnf makecache > /dev/null 2>&1
         ;;
         AlmaLinux)
             sed -e 's|^mirrorlist=|#mirrorlist=|g' \
@@ -386,7 +388,7 @@ function ChangeRedMirror(){
 /etc/yum.repos.d/CentOS-*.repo
                 ;;
             esac
-            yum makecache
+            yum makecache > /dev/null 2>&1
         ;;
         "CentOS Stream")   
             sed -i.bak \
@@ -394,7 +396,7 @@ function ChangeRedMirror(){
 -e 's|^#baseurl=|baseurl=|' \ 
 -e 's|http://mirror.centos.org|${WebProtocol}${fast_mirror}|' \ 
 /etc/yum.repos.d/CentOS-*.repo
-            yum clean all && yum makecache
+            yum clean all > /dev/null 2>&1 && yum makecache > /dev/null 2>&1
         ;; 
     esac
     
@@ -420,7 +422,7 @@ function UpdateMirrors() {
         Arch)
             cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.$(date "+%Y%m%d$s%H%M%S").bak 
             sed -i "1i\Server = ${WebProtocol}${fast_mirror}/${Source_Branch}/\$repo/os/\$arch" /etc/pacman.d/mirrorlist
-            pacman -Syyu
+            pacman -Syyu > /dev/null 2>&1
         ;;
     esac
     
@@ -430,8 +432,8 @@ function RunEnd() {
 }
 function Combin_Function() {
     PermissionJudgment
-    CheckCN
     CheckOsType
+    CheckCN
     CheckCloudVendors
     StartTitle
     ChooseMirrors
