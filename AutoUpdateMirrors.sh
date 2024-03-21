@@ -402,6 +402,7 @@ function ChangeRedMirror(){
     
 }
 function UpdateMirrors() {
+    logger info "Start update the mirrors"
     if [[ "$CloudVendor" != "Other" ]];then
         WebProtocol="http://"
     else
@@ -422,7 +423,7 @@ function UpdateMirrors() {
         Arch)
             cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.$(date "+%Y%m%d$s%H%M%S").bak 
             sed -i "1i\Server = ${WebProtocol}${fast_mirror}/${Source_Branch}/\$repo/os/\$arch" /etc/pacman.d/mirrorlist
-            pacman -Syyu > /dev/null 2>&1
+            pacman -Syyu 
         ;;
     esac
     
